@@ -5,6 +5,7 @@ import com.securebank.dto.DepositRequest;
 import com.securebank.dto.DepositResponse;
 import com.securebank.service.DepositService;
 
+import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,7 +22,7 @@ public class DepositController {
     @PostMapping
     public DepositResponse depositMoney(
             @AuthenticationPrincipal String email,
-            @RequestBody DepositRequest request) {
+            @Valid @RequestBody DepositRequest request) {
 
         return depositService.depositMoney(email, request);
     }

@@ -1,5 +1,4 @@
-package com.securebank.impl;
-
+package com.securebank.service.Impl;
 import com.securebank.dto.ProfileResponse;
 import com.securebank.dto.ProfileUpdateRequest;
 import com.securebank.entity.User;

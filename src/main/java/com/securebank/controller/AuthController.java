@@ -1,8 +1,10 @@
+
 package com.securebank.controller;
 
 import com.securebank.dto.*;
 import com.securebank.service.AuthService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
@@ -28,8 +30,13 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
-            @Valid @RequestBody LoginRequest request) {
+            @Valid @RequestBody LoginRequest request,
+            HttpServletRequest httpRequest) {
 
-        return ResponseEntity.ok(authService.login(request));
+        String ipAddress = httpRequest.getRemoteAddr();
+
+        return ResponseEntity.ok(
+                authService.login(request, ipAddress)
+        );
     }
 }

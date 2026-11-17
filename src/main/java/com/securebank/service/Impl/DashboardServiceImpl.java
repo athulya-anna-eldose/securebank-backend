@@ -1,5 +1,5 @@
 
-package com.securebank.service.impl;
+package com.securebank.service.Impl;
 
 import com.securebank.dto.DashboardResponse;
 import com.securebank.dto.TransactionResponse;

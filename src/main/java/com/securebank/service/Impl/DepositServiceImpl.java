@@ -1,6 +1,5 @@
 
-package com.securebank.service.impl;
-
+package com.securebank.service.Impl;
 import com.securebank.dto.DepositRequest;
 import com.securebank.dto.DepositResponse;
 import com.securebank.entity.Account;

@@ -1,4 +1,7 @@
+
 package com.securebank.security;
+
+import com.securebank.service.SecurityMonitoringService;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -17,9 +20,22 @@ import java.util.Collections;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
+    private final SecurityMonitoringService securityMonitoringService;
 
-    public JwtAuthenticationFilter(JwtService jwtService) {
+    public JwtAuthenticationFilter(
+            JwtService jwtService,
+            SecurityMonitoringService securityMonitoringService) {
+
         this.jwtService = jwtService;
+        this.securityMonitoringService = securityMonitoringService;
+    }
+
+    // Skip public authentication endpoints and CORS preflight requests
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+
+        return request.getMethod().equalsIgnoreCase("OPTIONS")
+                || request.getRequestURI().startsWith("/api/auth/");
     }
 
     @Override
@@ -31,10 +47,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String header = request.getHeader("Authorization");
 
-        if (header != null && header.startsWith("Bearer ")) {
+        String ipAddress = request.getRemoteAddr();
+        String endpoint = request.getRequestURI();
+        String method = request.getMethod();
 
-            String token = header.substring(7);
+        // Case 1: Missing or incorrectly formatted Authorization header
+        if (header == null || !header.startsWith("Bearer ")) {
 
+            securityMonitoringService.logEvent(
+                    "UNAUTHORIZED_ACCESS",
+                    "MEDIUM",
+                    "Unauthenticated access attempt to protected API",
+                    null,
+                    ipAddress,
+                    endpoint,
+                    method
+            );
+
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        String token = header.substring(7);
+
+        try {
+
+            // Case 2: Validate JWT token
             if (jwtService.isTokenValid(token)) {
 
                 String email = jwtService.extractEmail(token);
@@ -48,7 +86,37 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 SecurityContextHolder.getContext()
                         .setAuthentication(authentication);
+
+            } else {
+
+                // Case 3: Invalid JWT token
+                securityMonitoringService.logEvent(
+                        "INVALID_JWT_TOKEN",
+                        "HIGH",
+                        "Invalid or expired JWT token used to access protected API",
+                        null,
+                        ipAddress,
+                        endpoint,
+                        method
+                );
+
+                SecurityContextHolder.clearContext();
             }
+
+        } catch (RuntimeException exception) {
+
+            // Case 4: Token validation or extraction error
+            securityMonitoringService.logEvent(
+                    "INVALID_JWT_TOKEN",
+                    "HIGH",
+                    "JWT validation failed while accessing protected API",
+                    null,
+                    ipAddress,
+                    endpoint,
+                    method
+            );
+
+            SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);

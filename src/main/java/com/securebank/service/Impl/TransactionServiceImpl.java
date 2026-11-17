@@ -1,5 +1,4 @@
-package com.securebank.impl;
-
+package com.securebank.service.Impl;
 import com.securebank.dto.TransactionResponse;
 import com.securebank.entity.User;
 import com.securebank.entity.Account;
